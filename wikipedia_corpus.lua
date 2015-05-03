@@ -5,7 +5,9 @@
 -- the class can then generate a subclass object that is an iterator over a random order on that list. the subclass object has a method that gives the next article, which is also an iterator over words in the article.
 -- the article iterator object keeps track of how many articles it has dispatched and how many are left
 
-require'lfs'
+require 'lfs'
+random_article_iterator = require 'random_article_iterator' 
+
 local wikipedia_corpus = {}
 wikipedia_corpus.__index = wikipedia_corpus
 
@@ -80,12 +82,12 @@ function wikipedia_corpus.add_file_articles(self, file_path)
     end
 end 
 
-function wikipedia_corpus.build_vocabulary()
+function wikipedia_corpus.build_vocabulary(self)
     local vocabulary = {}
 end
 
-function wikipedia_corpus.make_random_iterator()
-
+function wikipedia_corpus.make_random_iterator(self)
+    return random_article_iterator.new(self) 
 end
 
 return wikipedia_corpus
