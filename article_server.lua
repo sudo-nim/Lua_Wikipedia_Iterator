@@ -1,4 +1,4 @@
--- initialize a article_server object, giving it a folder of folders containing output files from Wikipedia-Extractor.py
+-- initialize an article_server object, giving it a folder of folders containing output files from Wikipedia-Extractor.py
 -- -- the folder should only contain files with wikipedia text or folders with files of wikipedia text
 -- the class searches through the folder finding the folder/file/character where each article starts, and stores the name of the article with that location information. All of these are stored in a list-style table.
 --  -- while going through the list, it should store all of the unique words
@@ -13,23 +13,35 @@ function article_server.new(corpus_path)
     if corpus_path == nil then error('need corpus path') end
     local self = setmetatable({}, article_server)
     self.corpus_path = corpus_path
+    print('Scanning corpus directory tree...')
+    self:add_text_file_paths()
+    print('Adding articles...')
+    self:add_articles()
+    print('Building vocabulary...')
+    self:build_vocabulary()
     return self
+end
+
+function article_server.get_article(self, number)
+    local text_file = io.open(self.article_paths[number])
+    text_file:seek('set', self.article_starts[number])
+    local content = text_file:read(self.article_stops[number] - 
+        self.article_starts[number])
+    return content 
 end
 
 function article_server.add_text_file_paths(self)
     self.text_file_paths = {}
-    path = self.corpus_path
+    local path = self.corpus_path
     self:add_text_files_recursively(path)
 end
 
 function article_server.add_text_files_recursively(self, path)
     for file_name in lfs.dir(path) do
         if lfs.attributes(path..'/'..file_name,"mode") == "file" then 
-            print("found file, "..path..'/'..file_name)
             table.insert(self.text_file_paths, path..'/'..file_name)
         elseif lfs.attributes(path..'/'..file_name,"mode") == "directory" and 
             file_name ~= '.' and file_name ~= '..' then 
-            print("found directory, "..path..'/'..file_name)
             self:add_text_files_recursively(path..'/'..file_name)
         end
     end
@@ -46,17 +58,17 @@ function article_server.add_articles(self)
 end
 
 function article_server.add_file_articles(self, file_path)
-    file = io.open(file_path, "r")
-    not_done = true  
+    local file = io.open(file_path, "r")
+    local not_done = true  
     while not_done do
         line = file:read()
         if line == nil then
             not_done = false
         elseif line:sub(1,4) == '<doc' then
-            start,stop = line:find('title')
-            title_start = stop+3
-            title_stop = title_start+line:sub(title_start,-1):find('\"')
-            title = line:sub(title_start,title_stop-2)
+            local start,stop = line:find('title')
+            local title_start = stop+3
+            local title_stop = title_start+line:sub(title_start,-1):find('\"')
+            local title = line:sub(title_start,title_stop-2)
             table.insert(self.article_titles, title)
             table.insert(self.article_starts, file:seek()-line:len()-1)
         elseif line:sub(1,4) == '</do' then
@@ -66,5 +78,8 @@ function article_server.add_file_articles(self, file_path)
     end
 end
 
+function article_server.build_vocabulary()
+    local vocabulary = {}
+end
 
 return article_server
