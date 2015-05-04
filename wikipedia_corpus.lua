@@ -85,14 +85,13 @@ end
 function wikipedia_corpus.build_vocabulary(self)
     -- vocabulary will be a word->num_occurrences dictionary
     local vocabulary = {}
-    for ind, file_name in pairs(self.text_file_paths) do
-        local text_file = io.open(file_name, 'r')
-        local line = text_file:read()           
+
+    function scan_file(text_file)
         local not_done = false
+        local line = text_file:read()           
         if line ~= nil then not_done = true end
         while not_done do
             for word in line:gmatch("%S+") do 
-                print(word)
                 if vocabulary[word] == nil then
                     vocabulary[word] = 1
                 else
@@ -102,6 +101,11 @@ function wikipedia_corpus.build_vocabulary(self)
             line = text_file:read()           
             if line == nil then not_done = false end
         end
+    end
+
+    for ind, file_name in pairs(self.text_file_paths) do
+        local text_file = io.open(file_name, 'r')
+        scan_file(text_file)
     end
     self.vocabulary = vocabulary
 end
