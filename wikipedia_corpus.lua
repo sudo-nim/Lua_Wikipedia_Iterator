@@ -19,8 +19,8 @@ function wikipedia_corpus.new(corpus_path)
     self:add_text_file_paths()
     print('Adding articles...')
     self:add_articles()
-    print('Building vocabulary...')
-    self:build_vocabulary()
+    print('Building vocab_dict...')
+    self:build_vocab_dict()
     return self
 end
 
@@ -82,9 +82,9 @@ function wikipedia_corpus.add_file_articles(self, file_path)
     end
 end 
 
-function wikipedia_corpus.build_vocabulary(self)
-    -- vocabulary will be a word->num_occurrences dictionary
-    local vocabulary = {}
+function wikipedia_corpus.build_vocab_dict(self)
+    -- vocab_dict will be a word->num_occurrences dictionary
+    local vocab_dict = {}
 
     function scan_file(text_file)
         local not_done = false
@@ -92,22 +92,33 @@ function wikipedia_corpus.build_vocabulary(self)
         if line ~= nil then not_done = true end
         while not_done do
             for word in line:gmatch("%S+") do 
-                if vocabulary[word] == nil then
-                    vocabulary[word] = 1
+                if vocab_dict[word] == nil then
+                    vocab_dict[word] = 1
                 else
-                    vocabulary[word] = vocabulary[word]+1
+                    vocab_dict[word] = vocab_dict[word]+1
                 end
             end
             line = text_file:read()           
             if line == nil then not_done = false end
         end
     end
+    function split_vocab_and_freqs()
+        local vocabulary = {}
+        local frequencies = {}
+        for word, frequency in pairs(vocab_dict) do
+            table.insert(vocabulary, word)                
+            table.insert(frequencies, frequency)
+        end
+        return vocabulary, frequencies
+    end
 
     for ind, file_name in pairs(self.text_file_paths) do
         local text_file = io.open(file_name, 'r')
         scan_file(text_file)
     end
-    self.vocabulary = vocabulary
+
+    self.vocabulary, self.frequencies = split_vocab_and_freqs()
+
 end
 
 function wikipedia_corpus.make_random_iterator(self)
